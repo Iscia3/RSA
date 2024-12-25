@@ -52,7 +52,7 @@ else:
          # Dissociation des données reçues
          try:
               dico_message_recu = json.loads(ligne.decode('utf-8')) # json.loads pour dissocier les messages reçues
-         ecxept json.JSONDecodeError as e:
+         except json.JSONDecodeError as e:
             print(f"Erreur de décodage JSON : {e}")
             continue
 
