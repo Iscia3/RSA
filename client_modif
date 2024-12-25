@@ -5,54 +5,65 @@ import rsa_key
 import socket
 import os
 
+# Configuration du socket
 socket_connexion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 socket_connexion.connect(('127.0.0.1', 8080))
 
-pid = os.fork()
+# Géneration des clées RSA du client
 e_c, d_c, n_c=rsa_key.gen_rsa_keys(10)
-dico_key={"type": "key",
+dico_key={
+      "type": "key",
       "e":e_c,
-      "n": n_c}
+      "n":n_c,
+      "d":d_c
+}
+
+pid = os.fork()
+
 if pid:
-    # je suis le parent
-    while 1:
-       # ligne = input(">>")
-        #if ligne
-        #ligne=dico_key
-        #if not ligne:
-         #   break
+    # je suis le parent, processus parent: envoie des données; envoie des clées publqies avec key et des messages chiffrés avec message
+    while True:
         contenu = input(">>")
         if contenu=="key":
+            #Envoie des clées publiques
             ligne=json.dumps(dico_key)
         else :
-            message_crypted=chiffrement.encrypt(n_c,contenu)
-            dico_message={"type":"message",
-                          "data":message_crypted}
+            # Chffrement et envoi du message
+            message_crypted=chiffrement.encrypt((e_c, n_c),contenu.encode('utf-8'))
+            dico_message={
+                  "type":"message",
+                  "data":message_crypted
+            }
             ligne=json.dumps(dico_message)
 
         if not contenu:
             break
-        #dico={"type":ligne,
-         #     "data":cle_pub,} #la virgule a la fin ne sert a rien
 
-        #chaine = json.dumps(dico)
-        #chaine = json.dumps(dico)
-        #socket_connexion.sendall(ligne.encode('utf8'))
+        # Envoi des données au serveur
         socket_connexion.sendall(ligne.encode('utf-8'))
+
 else:
-    # je suis l'enfant
-    while 1:
+    # je suis l'enfant, processus enfant: réception des données; reçoit les messages et les affiche après déchiffrement et met à jour les clées publiques lorsqu'elles sont reçues
+    while True:
         ligne = socket_connexion.recv(1024)
-        dico_message_recu = loads(ligne)
+        if not ligne:
+            break
+
+         # Dissociation des données reçues
+         try:
+              dico_message_recu = json.loads(ligne.decode('utf-8')) # json.loads pour dissocier les messages reçues
+         ecxept json.JSONDecodeError as e:
+            print(f"Erreur de décodage JSON : {e}")
+            continue
+
         if dico_message_recu["type"] == "message":
+            # Déchiffrement du message
             message_crypted = dico_message_recu["data"]
-            dechiffre=chiffrement.decrypt(d_c,message_crypted)
+            dechiffre=chiffrement.decrypt((d_c, n_c),message_crypted)
+            print("Message reçu:", dechiffre.decode('utf-8'))
         elif dico_message_recu["type"]=="key":
             e_c=dico_message_recu["e"]
             n_c=dico_message_recu["n"]
-
-        if not ligne:
-            break
-        print(ligne)
+            print("Clée publique reçue:" e_c, n_c
 
 socket_connexion.close()
