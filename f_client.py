@@ -4,7 +4,7 @@ import socket
 import os
 import sys
 
-# Création du socket et connxion au serveur
+# Création du socket et connexion au serveur
 socket_connexion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
     socket_connexion.connect(('127.0.0.1', 8080))
