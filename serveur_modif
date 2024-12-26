@@ -5,45 +5,74 @@ import rsa_key
 import socket
 import os
 
+# Création du socket serveur
 socket_attente = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 socket_attente.bind(('', 8080))
 socket_attente.listen(socket.SOMAXCONN)
 
+print("Serveur en attente de connexion...")
 (socket_connectee, TSAP_client) = socket_attente.accept()
-print(TSAP_client)
-pid = os.fork()
+print(f"Connexion établie avec: {TSAP_client}")
+
+# Génération des clées RSA
 e_s, d_s, n_s=rsa_key.gen_rsa_keys(10)
 dico_key={"type":"key",
           "e":e_s,
           "n":n_s}
-if pid:
-    # je suis le parent
-    while 1:
-        ligne = socket_connectee.recv(1024)
-        dico_message_recu = loads(ligne)
-        if dico_message_recu["type"] == "message":
-            message_crypted = dico_message_recu["data"]
-            dechiffre=chiffrement.decrypt(d_s,message_crypted)
-        elif dico_message_recu["type"]=="key":
-            e_c=dico_message_recu["e"]
-            n_c=dico_message_recu["n"]
 
-        if not ligne:
-            break
-        print(dechiffre)
+#Création d'un processue enfant
+pid = os.fork()
+
+if pid:
+    # je suis le parent, processus parent: Réception des messages
+    try:
+          while True:
+              ligne = socket_connectee.recv(1024)
+              if not ligne:
+                  print("Connexion fermée par le client.")
+                  break
+              try:
+                   #Dissociation du message reçu
+                   dico_message_recu = json.loads(ligne.decode('utf-8')) # les messages JSON sont correctement dissociés avec json.loads
+                   if dico_message_recu["type"] == "message":
+                      message_crypted = dico_message_recu["data"]
+                      dechiffre=chiffrement.decrypt((d_s,n_s),message_crypted)
+                      print(f"Message déchiffré: {dechiffre.decode('utf-8')})
+                  elif dico_message_recu["type"]=="key":
+                     e_c=dico_message_recu["e"]
+                     n_c=dico_message_recu["n"]
+                     print(f"Clée publique client reçue: e={e_c}, n={n_c}")
+              except json.JSONDecodeError as e: 
+                  print(f"Erreur de décodage JSON: {e}")
+     except KeyboardInterrupt: # pour gérer les erreurs réseau et les interruptions utilisateur
+         print("\nInterruption par l'utilisateur.")
+     finally: # le socket est fermé proprement dans un bloc finally
+          socket_connectee.close()
+          socket_attente.close()
+
 else:
-    # je suis l'enfant
-    while 1:
-        contenu = input(">")
-        if contenu=="key":
-            ligne=json.dumps(dico_key)
-        else :
-            message_crypted=chiffrement.encrypt(n_s,contenu)
-            dico_message={"type":"message",
-                          "data":message_crypted}
-            ligne=json.dumps(dico_message)
-            #chaine = json.dumps(dico)
-        if not contenu:
-            break
-        socket_connectee.sendall(ligne.encode('utf8'))
-socket_connectee.close()
+    # je suis l'enfant, processus enfant: Envoi des messages
+    try:
+        while True:
+            contenu = input(">")
+            if contenu=="key":
+                # Envoi de la clée publique du serveur
+                ligne=json.dumps(dico_key)
+            else :
+                 # Chiffrement et envoi du message
+                 if 'e_c' in locals() and 'n_c' in locals():
+                     message_crypted=chiffrement.encrypt((e_c,n_c),contenu.encode('utf-8'))
+                     dico_message={"type":"message","data":message_crypted}
+                     ligne=json.dumps(dico_message)
+                 else:
+                      print("Clée publique du client non reçue. Il nous est impossible d'envoyer un message.")
+                      continue
+            if not contenu:
+                print("Fin de la connexion.")
+
+                # Envoi du message
+                socket_connectee.sendall(ligne.encode('utf8'))
+    except KeyboardInterrupt:
+        print("\nInterruption par l'utilisateur.")
+    finally: # le socket est fermé proprement dans un bloc finally
+        socket_connectee.close()
