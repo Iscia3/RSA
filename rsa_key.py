@@ -14,7 +14,7 @@ def gen_rsa_keys(length,e=65537):
         raise ValueError("La longueur des nombres premiers doit être au moins 2.") # vérifie que la longueur des nombres premiers est suffisante
      
     while True:
-        # Générer deux nombres premiers
+        # Générer deux nombres premiers p et q avec la fonction Gen.gen_prime
         p=int(Gen.gen_prime(length))
         q=int(Gen.gen_prime(length))
 
@@ -22,14 +22,14 @@ def gen_rsa_keys(length,e=65537):
         if abs(p-q) < 10** (lenght - 1 ):
             continue
             
-        n=p*q
-        phi=(p-1)*(q-1)
+        n=p*q # paramètre RSA: produit des deux nombres premiers
+        phi=(p-1)*(q-1) # paramètre RSA: fonction d'Euler qui calcule phi(n)
 
-        # Vérifier que e est premier avec phi
+        # Vérifier que e est premier avec phi, 
         if EE.egcd(e,phi)[0] == 1:
             break
     
-    # Calculer l'inverse modulaire de e modulo phi
+    # Calculer l'inverse modulaire de e modulo phi, qui est d
     d=EE.modinv(e,phi)
     if d is None:
         raise ValueError("Impossible de calculer l'inverse modulaire.") #vérifie si EE.modinv retourne une valeur valide pour éviter les erreurs lors de la génération des clées
