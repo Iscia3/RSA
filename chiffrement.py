@@ -12,7 +12,7 @@ def encrypt(public_key: couple[int,int], message: bytes) -> list[int]: # la clé
     return encrypted
     
 #Fonction de déchiffrement
-def decrypt(private_key: tuple[int,int], encrypted_message:list[int]) -> bytes: # la clée privée est un paramètre explicite
+def decrypt(private_key: couple[int,int], encrypted_message:list[int]) -> bytes: # la clée privée est un paramètre explicite
     d, n = private_key # couple (d,n) pour gérer proprement la clée privée
     decrypted=b""
     for b in encrypted_message:
