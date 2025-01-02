@@ -13,40 +13,46 @@ socket_attente.listen(socket.SOMAXCONN)
 
 (socket_connectee, TSAP_client) = socket_attente.accept()
 print(TSAP_client)
-pid = os.fork()
+
 liste=[]
-e_s, d_s, n_s=rsa_key.gen_rsa_keys(5)
+e_s, d_s, n_s=rsa_key.gen_rsa_keys(10)
+
+print(d_s)
 dico_key={"type":"key",
           "e":e_s,
           "n":n_s}
+
+pid = os.fork()
 if pid:
     # je suis le parent
     while 1:
         ligne = socket_connectee.recv(1024)
         dico_message_recu = json.loads(ligne)
-        if dico_message_recu["type"] == "message":
-            message_crypted = dico_message_recu["data"]
-            print(message_crypted)
-            dechiffre=chiffrement.decrypt(d_s,message_crypted)
-            print(dechiffre)
-        elif dico_message_recu["type"]=="key":
+        if dico_message_recu["type"]=="key":
             e_c=dico_message_recu["e"]
             n_c=dico_message_recu["n"]
+            print("nc",n_c)
             print(ligne)
+
+        elif dico_message_recu["type"] == "message":
+            message_crypted = dico_message_recu["data"]
+            print(message_crypted)
+            dechiffre=chiffrement.decrypt(d_s,message_crypted,n_s,d_s)
+            print(dechiffre)
 
         if not ligne:
             break
-        #print(ligne)
+
 else:
     # je suis l'enfant
     while 1:
-        contenu = input(">")
+        contenu = input(">>")
         if contenu=="key":
             ligne=json.dumps(dico_key)
         else :            
             for i in contenu:
                 liste.append(ord(i))
-            message_crypted=chiffrement.encrypt(n_s,liste)
+            message_crypted=chiffrement.encrypt(n_c,liste,n_c,e_s)
             print(message_crypted)
             dico_message={"type":"message",
                           "data":message_crypted}
