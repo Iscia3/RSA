@@ -3,7 +3,7 @@ import json
 import chiffrement
 import rsa_key
 import socket
-import os
+import os, sys
 
 socket_attente = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 socket_attente.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -15,26 +15,31 @@ socket_attente.listen(socket.SOMAXCONN)
 print(TSAP_client)
 
 liste=[]
-e_s, d_s, n_s=rsa_key.gen_rsa_keys(10)
+e_s, d_s, n_s=rsa_key.gen_rsa_keys(5)
 
 print(d_s)
 dico_key={"type":"key",
           "e":e_s,
           "n":n_s}
-
+r,w=os.pipe()
 pid = os.fork()
 if pid:
     # je suis le parent
     while 1:
+        
         ligne = socket_connectee.recv(1024)
         dico_message_recu = json.loads(ligne)
         if dico_message_recu["type"]=="key":
             e_c=dico_message_recu["e"]
             n_c=dico_message_recu["n"]
-            print("nc",n_c)
+            os.close(r)
+            texte=n_c.to_bytes((n_c.bit_length() + 7)// 8,"big")
+            os.write(w,texte)
             print(ligne)
+            
 
-        elif dico_message_recu["type"] == "message":
+        #elif dico_message_recu["type"] == "message":
+        else:
             message_crypted = dico_message_recu["data"]
             print(message_crypted)
             dechiffre=chiffrement.decrypt(d_s,message_crypted,n_s,d_s)
@@ -49,10 +54,16 @@ else:
         contenu = input(">>")
         if contenu=="key":
             ligne=json.dumps(dico_key)
-        else :            
+        else :   
             for i in contenu:
                 liste.append(ord(i))
-            message_crypted=chiffrement.encrypt(n_c,liste,n_c,e_s)
+            print(liste)
+            os.close(w)
+            r=os.fdopen(r)
+            r.read()  
+            n_c=int.from_bytes(r, byteorder='big')     
+            #print(n_c) 
+            message_crypted=chiffrement.encrypt(n_c,liste,e_s)
             print(message_crypted)
             dico_message={"type":"message",
                           "data":message_crypted}
