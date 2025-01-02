@@ -1,0 +1,34 @@
+import rsa_key
+import lpowmod
+
+e, d, n=rsa_key.gen_rsa_keys(10)
+
+def recuperer_cle(a):
+    e, d, n=rsa_key.gen_rsa_keys(a)
+    return (e,d,n)
+
+def encrypt(public_key, message :bytes,e) -> list[int]:
+    L=[]
+    for b in message:
+        L.append(lpowmod.lpowmod(int(b),e,n))
+    return L
+
+def decrypt(private_key, message_crypted:list[int],n,d) -> bytes:
+    result=b""
+    for b in message_crypted:
+      print("b", b)
+      B=lpowmod.lpowmod(int(b),d,n)
+      print("B",B)
+      byte = B.to_bytes((B.bit_length()+7)//8,byteorder="big")
+      result+=byte
+    return result.decode("utf-8")
+
+#mot="hu" 
+#print(mot.encode("utf-8"))      
+#print(encrypt(n,mot.encode("utf-8"),n,e))
+#code=decrypt(4155245885,encrypt(d,mot.encode("utf-8"),n,e),n,d)
+#print(code)
+#print(code.decode("utf-8"))
+
+
+        
