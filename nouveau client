@@ -3,14 +3,14 @@ import json
 import chiffrement
 import rsa_key
 import socket
-import os
+import os, sys 
 
 socket_connexion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 socket_connexion.connect(('127.0.0.1', 8080))
 
 
-
-e_c, d_c, n_c=rsa_key.gen_rsa_keys(10)
+#r,w=os.pipe()
+e_c, d_c, n_c=rsa_key.gen_rsa_keys(5)
 liste=[]
 dico_key={"type": "key",
       "e":e_c,
@@ -32,7 +32,7 @@ if pid:
         else :
             for i in contenu:
                 liste.append(ord(i))
-            message_crypted=chiffrement.encrypt(n_s,liste,n_s,d_c)
+            message_crypted=chiffrement.encrypt(n_c,liste,d_c)
             print(message_crypted)
             dico_message={"type":"message",
                           "data":message_crypted}
@@ -59,6 +59,8 @@ else:
         elif dico_message_recu["type"]=="key":
             e_s=dico_message_recu["e"]
             n_s=dico_message_recu["n"]
+            
+            
 
         if not ligne:
             break
