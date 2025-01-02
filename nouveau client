@@ -9,12 +9,14 @@ socket_connexion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 socket_connexion.connect(('127.0.0.1', 8080))
 
 
-pid = os.fork()
-e_c, d_c, n_c=rsa_key.gen_rsa_keys(5)
+
+e_c, d_c, n_c=rsa_key.gen_rsa_keys(10)
 liste=[]
 dico_key={"type": "key",
       "e":e_c,
       "n": n_c}
+print(dico_key)
+pid = os.fork()
 if pid:
     # je suis le parent
     while 1:
@@ -24,12 +26,13 @@ if pid:
         #if not ligne:
          #   break
         contenu = input(">>")
+
         if contenu=="key":
             ligne=json.dumps(dico_key)
         else :
             for i in contenu:
                 liste.append(ord(i))
-            message_crypted=chiffrement.encrypt(n_c,liste)
+            message_crypted=chiffrement.encrypt(n_s,liste,n_s,d_c)
             print(message_crypted)
             dico_message={"type":"message",
                           "data":message_crypted}
@@ -51,10 +54,11 @@ else:
         dico_message_recu = json.loads(ligne)
         if dico_message_recu["type"] == "message":
             message_crypted = dico_message_recu["data"]
-            dechiffre=chiffrement.decrypt(d_c,message_crypted)
+            dechiffre=chiffrement.decrypt(d_c,message_crypted,n_c,e_c)
+
         elif dico_message_recu["type"]=="key":
-            e_c=dico_message_recu["e"]
-            n_c=dico_message_recu["n"]
+            e_s=dico_message_recu["e"]
+            n_s=dico_message_recu["n"]
 
         if not ligne:
             break
