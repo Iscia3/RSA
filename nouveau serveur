@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import json
+import rsa_key
+import lpowmod
 import chiffrement
 import rsa_key
 import socket
-import os, sys
+import os
 
 socket_attente = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 socket_attente.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -15,7 +17,7 @@ socket_attente.listen(socket.SOMAXCONN)
 print(TSAP_client)
 
 liste=[]
-e_s, d_s, n_s=rsa_key.gen_rsa_keys(5)
+e_s, d_s, n_s=rsa_key.gen_rsa_keys(10)
 
 print(d_s)
 dico_key={"type":"key",
@@ -35,6 +37,7 @@ if pid:
             os.close(r)
             texte=n_c.to_bytes((n_c.bit_length() + 7)// 8,"big")
             os.write(w,texte)
+            os.close(w)
             print(ligne)
             
 
@@ -42,8 +45,8 @@ if pid:
         else:
             message_crypted = dico_message_recu["data"]
             print(message_crypted)
-            dechiffre=chiffrement.decrypt(d_s,message_crypted,n_s,d_s)
-            print(dechiffre)
+            dechiffre=chiffrement.decrypt(d_s,message_crypted,n_s)
+            print(dechiffre.decode('utf-8'))
 
         if not ligne:
             break
@@ -59,11 +62,13 @@ else:
                 liste.append(ord(i))
             print(liste)
             os.close(w)
-            r=os.fdopen(r)
-            r.read()  
-            n_c=int.from_bytes(r, byteorder='big')     
+            #recu=os.fdopen(r)
+            recu=os.read(r,1024)
+            #dec=recu.decode()
+            os.close(r)
+            n_c=int.from_bytes(recu, byteorder='big') 
             #print(n_c) 
-            message_crypted=chiffrement.encrypt(n_c,liste,e_s)
+            message_crypted=chiffrement.encrypt(n_c,contenu.encode("utf-8"),e_s)
             print(message_crypted)
             dico_message={"type":"message",
                           "data":message_crypted}
