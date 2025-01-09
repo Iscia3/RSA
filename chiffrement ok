@@ -1,0 +1,39 @@
+import rsa_key
+import lpowmod
+
+def encrypt(n, message :bytes,e) -> list[int]:
+    L=[]
+    for b in message:
+        L.append(lpowmod.lpowmod(int(b),e,n))
+    return L
+
+def decrypt(d, message_crypted:list[int],n) -> bytes:
+    result=b""
+    for b in message_crypted:
+        print("b", b)
+        B=lpowmod.lpowmod(int(b),d,n)
+        print("B",B)
+        byte = B.to_bytes((B.bit_length()+7)//8,byteorder="big")
+        result+=byte
+    return result
+
+if __name__ == "__main__":
+#return result.decode("utf-8")
+    #print(n,d,e)
+    mot="oui" 
+    print(mot.encode("utf-8"))      
+    codee=encrypt(6140966077,mot.encode("utf-8"),65537)
+    print(codee)
+    code=decrypt(2668853717,codee,6140966077)
+    print("alors",code)
+    #print(code.decode("utf-8"))
+
+
+    Mot="oui" 
+    print(mot.encode("utf-8"))      
+    Codee=encrypt(n_s,Mot.encode("utf-8"),e_s)
+    print(Codee)
+    Code=decrypt(d_s,Codee,n_s)
+    print(Code)
+    print(Code.decode("utf-8"))
+
