@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+import json
+import rsa_key
+import lpowmod
+import chiffrement
+import rsa_key
+import socket
+import os
+
+socket_attente = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+socket_attente.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+socket_attente.bind(('', 8790))
+socket_attente.listen(socket.SOMAXCONN)
+
+
+(socket_connectee, TSAP_client) = socket_attente.accept()
+print(TSAP_client)
+
+liste=[]
+e, d_s, n_s=rsa_key.gen_rsa_keys(10)
+
+print(d_s)
+dico_key={"type":"key",
+          "e":e,
+          "n":n_s}
+
+
+
+r,w=os.pipe()
+pid = os.fork()
+if pid:
+    # je suis le parent
+    while 1:
+        
+        ligne = socket_connectee.recv(1024)
+        dico_message_recu = json.loads(ligne)
+        if dico_message_recu["type"]=="key":
+            e_c=dico_message_recu["e"]
+            n_c=dico_message_recu["n"]
+            os.close(r)
+            texte=n_c.to_bytes((n_c.bit_length() + 7)// 8,"big")
+            os.write(w,texte)
+            os.close(w)
+            print(ligne)
+            socket_connectee.sendall(json.dumps(dico_key).encode())
+
+        #elif dico_message_recu["type"] == "message":
+        else:
+            message_crypted = dico_message_recu["data"]
+            print(message_crypted)
+            dechiffre=chiffrement.decrypt(d_s,message_crypted,n_s)
+            print(dechiffre)
+            print(dechiffre.decode('utf-8'))
+
+        if not ligne:
+            break
+
+else:
+    os.close(w)
+    #recu=os.fdopen(r)
+    recu=os.read(r,1024)
+    #dec=recu.decode()
+    os.close(r)
+    # je suis l'enfant
+    while 1:
+        contenu = input(">>")
+
+        n_c=int.from_bytes(recu, byteorder='big')
+        #print(n_c) 
+        message_crypted=chiffrement.encrypt(n_c,contenu.encode("utf-8"),e)
+        print(message_crypted)
+        dico_message={"type":"message",
+                        "data":message_crypted}
+        ligne=json.dumps(dico_message)
+        #chaine = json.dumps(dico)
+        if not contenu:
+            break
+        socket_connectee.sendall(ligne.encode('utf8'))
+
+socket_connectee.close()
