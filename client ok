@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+import json
+import chiffrement
+import rsa_key
+import rsa_key
+import lpowmod
+import socket
+import os, sys 
+
+socket_connexion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+socket_connexion.connect(('127.0.0.1', 8790))
+
+e, d_c, n_c=rsa_key.gen_rsa_keys(10)
+liste=[]
+dico_key={"type": "key",
+      "e":e,
+      "n": n_c}
+
+print(d_c)
+
+socket_connexion.sendall(json.dumps(dico_key).encode())
+r,w=os.pipe()
+pid = os.fork()
+if pid:
+    # je suis le parent
+    while 1:
+        ligne = socket_connexion.recv(1024)
+        dico_message_recu = json.loads(ligne)
+        print(dico_message_recu)
+        if dico_message_recu["type"] == "message":
+            message_crypted = dico_message_recu["data"]
+            print(message_crypted)
+            dechiffre=chiffrement.decrypt(d_c,message_crypted,n_c)
+            print(dechiffre)
+            print(dechiffre.decode("utf-8"))
+       
+        elif dico_message_recu["type"]=="key":
+            e_s=dico_message_recu["e"]
+            n_s=dico_message_recu["n"]
+            os.close(r)
+            texte=n_s.to_bytes((n_s.bit_length() + 7)// 8,"big")
+            os.write(w,texte)
+            os.close(w)     
+            print(ligne)
+            
+        if not ligne:
+            break
+        
+else:
+    os.close(w)
+    #recu=os.fdopen(r)
+    recu=os.read(r,1024)
+    #dec=recu.decode()
+    os.close(r)
+    # je suis l'enfant
+    while 1:
+        
+        contenu = input(">>")
+
+        n_s=int.from_bytes(recu, byteorder='big')
+        #print(n_c) 
+        message_crypted=chiffrement.encrypt(n_s,contenu.encode("utf-8"),e)
+        print(message_crypted)
+        dico_message={"type":"message",
+                        "data":message_crypted}
+        ligne=json.dumps(dico_message)
+
+        if not contenu:
+            break
+        socket_connexion.sendall(ligne.encode('utf-8'))
+socket_connexion.close()
