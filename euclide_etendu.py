@@ -13,7 +13,7 @@ def egcd(a, b):
 
 def modinv(a, m):
     """
-    Calcule de l'inverse modulaire de 'a' modulo 'm' en utilisant l'algorithme
+    Calcul de l'inverse modulaire de 'a' modulo 'm' en utilisant l'algorithme
     d'Euclide étendu. Si l'inverse n'existe pas, la fonction retourne 'None'.
     """
     gcd, x, y = egcd(a, m)
