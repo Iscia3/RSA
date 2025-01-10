@@ -2,25 +2,43 @@ import random
 import premier 
 
 def gen_prime(length):
-    random.seed()
-    first_digit="123456789"
-    digit="0"+first_digit
-    last_digit="1379"
-    nb=""
-    nb_premier=""
+    """
+    Génère un nombre premier aléatoire de la longueur spécifiée.
+    
+    Args:
+        length (int): Longueur en chiffres du nombre premier à générer.
+    
+    Returns:
+        str: Nombre premier généré sous forme de chaîne de caractères.
+    """
+    random.seed() # Initialise le générateur de nombres pseudo-aléatoires
+    first_digit="123456789" # Les chiffres valides pour le premier caractère
+    digit="0"+first_digit # Les chiffres valides pour les caractères intermédiaires
+    last_digit="1379" # Les chiffres valides pour le dernier caractère (nécessaire pour que le nombre soit potentiellement premier)
+    nb="" # Chaîne temporaire pour construire le nombre
+    nb_premier="" # Chaîne qui contiendra le nombre premier généré
+
+    # Génération d'un nombre aléatoire de la longueur spécifiée
     for i in range(length):
         if i==0:
+            # Le premier caractère ne peut pas être 0 pour éviter un nombre invalide
             nb=nb+random.choice(first_digit)
         elif i==length-1:
+             # Le dernier caractère est choisi parmi "1, 3, 7, 9" (obligatoire pour être potentiellement premier)
             nb=nb+random.choice(last_digit)
         else:
+            # Les caractères intermédiaires peuvent inclure 0 et les autres chiffres
             nb=nb+random.choice(digit)
-
+    
+    # Vérification si le nombre généré est premier
     if premier.is_prime(nb)==True:
+         # Si le nombre est premier, on l'enregistre dans `nb_premier`
         nb_premier=nb
     else:
+         # Si le nombre n'est pas premier, on relance la génération récursivement
         return gen_prime(length)
-    
+
+    # Retourne le nombre premier généré
     return nb_premier
 
 
