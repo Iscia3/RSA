@@ -8,7 +8,7 @@ import socket
 import os
 
 socket_attente = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-socket_attente.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+socket_attente.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #pour pouvoir réeutiliser le port après la fin de connexion
 socket_attente.bind(('', 8790))
 socket_attente.listen(socket.SOMAXCONN)
 
@@ -16,7 +16,7 @@ socket_attente.listen(socket.SOMAXCONN)
 (socket_connectee, TSAP_client) = socket_attente.accept()
 #print(TSAP_client)
 
-e, d_s, n_s=rsa_key.gen_rsa_keys(10)
+e, d_s, n_s=rsa_key.gen_rsa_keys(10) #récupération de la clé RSA pour le serveur
 
 #print(d_s)
 
@@ -25,8 +25,8 @@ dico_key={"type":"key",
           "n":n_s}
 
 
-r,w=os.pipe()
-pid = os.fork()
+r,w=os.pipe() #c'est ce qui va permettre de récupérer une donnée du côté parent dans le côté enfant
+pid = os.fork() #ce qui permet de faire un "chat" 
 
 if pid:
     # parent
@@ -39,16 +39,16 @@ if pid:
             n_c=dico_message_recu["n"]
             os.close(r)
             texte=n_c.to_bytes((n_c.bit_length() + 7)// 8,"big")
-            os.write(w,texte)
-            os.close(w)
+            os.write(w,texte) #permet de récupérer la valeur (on l'écrit) n_c reçue pour ensuite l'avoir dans l'enfant
+            os.close(w) 
             print(ligne)
             socket_connectee.sendall(json.dumps(dico_key).encode())
 
-        elif dico_message_recu["type"] == "quit":
+        elif dico_message_recu["type"] == "quit": #permet de quitter si le client quitte
             break
 
         else:
-            message_crypted = dico_message_recu["data"]
+            message_crypted = dico_message_recu["data"] #récupération du message du client
             #print(message_crypted)
             dechiffre=chiffrement.decrypt(d_s,message_crypted,n_s)
             #print(dechiffre)
@@ -59,9 +59,9 @@ if pid:
 
 else:
     # enfant
-    os.close(w)
-    recu=os.read(r,1024)
-    os.close(r)
+    os.close(w) #on n'a pas besoin d'écrire
+    recu=os.read(r,1024) #on récupère la valeur reçue du parent
+    os.close(r) #on ferme car on n'en a plus besoin
    
     while 1:
         contenu = input(">>")
@@ -72,9 +72,9 @@ else:
             socket_connectee.sendall(ligne.encode('utf-8'))
             break
 
-        n_c=int.from_bytes(recu, byteorder='big')
-        message_crypted=chiffrement.encrypt(n_c,contenu.encode("utf-8"),e)
-        print(message_crypted)
+        n_c=int.from_bytes(recu, byteorder='big')  #passage de bytes à int
+        message_crypted=chiffrement.encrypt(n_c,contenu.encode("utf-8"),e) #chiffrement pour l'envoi au client
+        #print(message_crypted)
         dico_message={"type":"message",
                         "data":message_crypted}
         ligne=json.dumps(dico_message)
@@ -83,5 +83,5 @@ else:
             break
         socket_connectee.sendall(ligne.encode('utf8'))
 
-os.kill(pid, 9)
+os.kill(pid, 9) #pour fermer proprement quand on veur quitter
 socket_connectee.close()
