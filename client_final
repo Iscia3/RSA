@@ -7,7 +7,7 @@ import lpowmod
 import socket
 import os, sys 
 
-#Configuration du socket
+#Configuration du socket et connexion au serveur
 socket_connexion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 socket_connexion.connect(('127.0.0.1', 8790))
 
@@ -25,15 +25,15 @@ socket_connexion.sendall(json.dumps(dico_key).encode())
 r,w=os.pipe() #c'est ce qui va permettre de récupérer une donnée (la clé publique du serveur) du côté parent dans le côté enfant
 pid = os.fork() #ce qui permet de faire un "chat" 
 if pid:
-    # parent
+    # parent, processus parent: envoie des données au serveur; envoie des clées publiques avec key et des messages chiffrés avec message
     while 1:
         ligne = socket_connexion.recv(1024)
-        dico_message_recu = json.loads(ligne)
+        dico_message_recu = json.loads(ligne) #json.loads pour dissocier les messages reçus
         #print(dico_message_recu)
         if dico_message_recu["type"] == "message":
-            message_crypted = dico_message_recu["data"]
+            message_crypted = dico_message_recu["data"] #chiffrement et envoi du message
            # print(message_crypted)
-            dechiffre=chiffrement.decrypt(d_c,message_crypted,n_c)
+            dechiffre=chiffrement.decrypt(d_c,message_crypted,n_c) #dechiffrement du message
            # print(dechiffre)
             print(dechiffre.decode("utf-8"))
 
@@ -53,7 +53,7 @@ if pid:
             break
         
 else:
-    # enfant
+    # enfant, processus enfant: réception des données du serveur; reçoit les messages et les affiches après déchiffrement 
 
     os.close(w)
     recu=os.read(r,1024)
@@ -81,4 +81,4 @@ else:
         socket_connexion.sendall(ligne.encode('utf-8'))
 
 os.kill(pid, 9) #pour fermer proprement quand on veut quitter
-socket_connexion.close()
+socket_connexion.close()# la connexion se termine proprement quand l'utilisateur ne met aucun texte ou interrompt le programme
