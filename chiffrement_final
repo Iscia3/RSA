@@ -1,13 +1,15 @@
 import rsa_key
 import lpowmod
 
+#Fonction de chiffrement
 def encrypt(n, message :bytes,e) -> list[int]:
     L=[]
     for b in message:
         L.append(lpowmod.lpowmod(int(b),e,n))
     return L
 
-def decrypt(d, message_crypted:list[int],n) -> bytes:
+#Fonction de déchiffrement
+def decrypt(d, message_crypted:list[int],n) -> bytes: # la clée publique est un paramètre explicite
     result=b""
     for b in message_crypted:
         B=lpowmod.lpowmod(int(b),d,n)
