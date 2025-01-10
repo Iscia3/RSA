@@ -13,7 +13,7 @@ def gen_prime(length):
     # Construction du nombre aléatoire
     first_digit=random.choice("123456789") # Premier chiffre
     digit="0"+first_digit
-    last_digit=random.choice("1379") # dernier chiffre
+    last_digit=random.choice("1379") # dernier chiffre (les seuls choix possibles pour un nombre premier plus grand que 10)
     nb=""
     nb_premier=""
     for i in range(length):
