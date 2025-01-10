@@ -37,7 +37,7 @@ if pid:
         if dico_message_recu["type"]=="key":
             e_c=dico_message_recu["e"]
             n_c=dico_message_recu["n"]
-            os.close(r)  #on ferme car on n'en a pas besoin ici
+            os.close(r) #on ferme car on n'en a pas besoin ici
             texte=n_c.to_bytes((n_c.bit_length() + 7)// 8,"big")
             os.write(w,texte) #permet d'écrire la valeur n_c reçue pour ensuite la récupérer dans l'enfant
             os.close(w) 
@@ -72,7 +72,7 @@ else:
             socket_connectee.sendall(ligne.encode('utf-8'))
             break
 
-        n_c=int.from_bytes(recu, byteorder='big')  #passage de bytes à int
+        n_c=int.from_bytes(recu, byteorder='big') #passage de bytes à int
         message_crypted=chiffrement.encrypt(n_c,contenu.encode("utf-8"),e) #chiffrement pour l'envoi au client
         #print(message_crypted)
         dico_message={"type":"message",
