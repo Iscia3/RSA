@@ -24,7 +24,7 @@ socket_connexion.sendall(json.dumps(dico_key).encode())
 r,w=os.pipe()
 pid = os.fork()
 if pid:
-    # je suis le parent
+    # parent
     while 1:
         ligne = socket_connexion.recv(1024)
         dico_message_recu = json.loads(ligne)
@@ -57,8 +57,7 @@ else:
     recu=os.read(r,1024)
     os.close(r)
     
-    while 1:
-        
+    while 1:        
         contenu = input(">>")
 
         if contenu == "quitter":
