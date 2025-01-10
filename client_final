@@ -7,9 +7,11 @@ import lpowmod
 import socket
 import os, sys 
 
+#Confoguration du socket
 socket_connexion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 socket_connexion.connect(('127.0.0.1', 8790))
 
+#Génération des clées RSA du client
 e, d_c, n_c=rsa_key.gen_rsa_keys(10)
 
 dico_key={"type": "key",
