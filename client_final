@@ -19,23 +19,25 @@ dico_key={"type": "key",
       "n": n_c}
 
 
-
+#envoi direct à la connexion de la clé
 socket_connexion.sendall(json.dumps(dico_key).encode())
-r,w=os.pipe()
-pid = os.fork()
+
+r,w=os.pipe() #c'est ce qui va permettre de récupérer une donnée (la clé publique du serveur) du côté parent dans le côté enfant
+pid = os.fork() #ce qui permet de faire un "chat" 
 if pid:
     # parent
     while 1:
         ligne = socket_connexion.recv(1024)
         dico_message_recu = json.loads(ligne)
-        print(dico_message_recu)
+        #print(dico_message_recu)
         if dico_message_recu["type"] == "message":
             message_crypted = dico_message_recu["data"]
            # print(message_crypted)
             dechiffre=chiffrement.decrypt(d_c,message_crypted,n_c)
            # print(dechiffre)
             print(dechiffre.decode("utf-8"))
-        elif dico_message_recu["type"] == "quit":
+
+        elif dico_message_recu["type"] == "quit": #permet de quitter si le serveur quitte
             break
         
         elif dico_message_recu["type"]=="key":
@@ -43,7 +45,7 @@ if pid:
             n_s=dico_message_recu["n"]
             os.close(r)
             texte=n_s.to_bytes((n_s.bit_length() + 7)// 8,"big")
-            os.write(w,texte)
+            os.write(w,texte) #permet d'écrire la valeur n_s reçue pour ensuite la récupérer dans l'enfant
             os.close(w)     
             print(ligne)
             
@@ -75,7 +77,8 @@ else:
 
         if not contenu:
             break
+
         socket_connexion.sendall(ligne.encode('utf-8'))
 
-os.kill(pid, 9)
+os.kill(pid, 9) #pour fermer proprement quand on veut quitter
 socket_connexion.close()
