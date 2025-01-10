@@ -22,4 +22,4 @@ def is_prime(n):
     else : 
         return True  # Le nombre est premier
     
-print("5",is_prime(5))
+#print("5",is_prime(5))
