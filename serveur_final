@@ -25,7 +25,7 @@ dico_key={"type":"key",
           "n":n_s}
 
 
-r,w=os.pipe() #c'est ce qui va permettre de récupérer une donnée du côté parent dans le côté enfant
+r,w=os.pipe() #c'est ce qui va permettre de récupérer une donnée (clé privée) du côté parent dans le côté enfant
 pid = os.fork() #ce qui permet de faire un "chat" 
 
 if pid:
@@ -37,9 +37,9 @@ if pid:
         if dico_message_recu["type"]=="key":
             e_c=dico_message_recu["e"]
             n_c=dico_message_recu["n"]
-            os.close(r)
+            os.close(r)  #on ferme car on n'en a pas besoin ici
             texte=n_c.to_bytes((n_c.bit_length() + 7)// 8,"big")
-            os.write(w,texte) #permet de récupérer la valeur (on l'écrit) n_c reçue pour ensuite l'avoir dans l'enfant
+            os.write(w,texte) #permet d'écrire la valeur n_c reçue pour ensuite la récupérer dans l'enfant
             os.close(w) 
             print(ligne)
             socket_connectee.sendall(json.dumps(dico_key).encode())
@@ -81,7 +81,8 @@ else:
     
         if not contenu:
             break
+
         socket_connectee.sendall(ligne.encode('utf8'))
 
-os.kill(pid, 9) #pour fermer proprement quand on veur quitter
+os.kill(pid, 9) #pour fermer proprement quand on veut quitter
 socket_connectee.close()
