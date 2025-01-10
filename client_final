@@ -70,7 +70,7 @@ else:
 
         n_s=int.from_bytes(recu, byteorder='big')
         message_crypted=chiffrement.encrypt(n_s,contenu.encode("utf-8"),e)
-        print(message_crypted)
+        #print(message_crypted)
         dico_message={"type":"message",
                         "data":message_crypted}
         ligne=json.dumps(dico_message)
